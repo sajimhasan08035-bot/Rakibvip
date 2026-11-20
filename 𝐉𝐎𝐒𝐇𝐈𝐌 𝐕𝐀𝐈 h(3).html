@@ -1,0 +1,491 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>⚡ RXN VIP AI ENGINE V3 (ADMIN EDITION)</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@700;900&family=Rajdhani:wght@600;700&display=swap');
+
+    * { box-sizing: border-box; margin: 0; padding: 0; -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; }
+    body, html { width: 100%; height: 100%; overflow: hidden; background: #000; font-family: 'Orbitron', sans-serif; }
+    
+    #game-frame { width: 100%; height: 100%; border: none; position: absolute; top: 0; left: 0; z-index: 1; }
+
+    #center-display {
+      display: none; flex-direction: column; align-items: center; justify-content: center;
+      text-align: center; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);
+      background: rgba(0, 0, 0, 0.5) !important; padding: 15px 25px; border-radius: 20px;
+      backdrop-filter: blur(4px); border: 1px solid rgba(0, 255, 136, 0.3);
+      z-index: 10001; pointer-events: none; animation: popFade 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    }
+
+    #center-period { font-family: 'Rajdhani', monospace; font-size: 16px; font-weight: 700; color: #00ff88; letter-spacing: 2px; text-shadow: 0 0 10px rgba(0, 255, 136, 0.9), 0 2px 5px #000; margin-bottom: 2px; }
+    #center-trend { font-family: 'Rajdhani', monospace; font-size: 14px; font-weight: 700; color: #00f2fe; letter-spacing: 1.5px; text-shadow: 0 0 8px rgba(0, 242, 254, 0.8), 0 2px 4px #000; margin-bottom: 4px; text-transform: uppercase; }
+    #center-label { font-size: 11px; letter-spacing: 3px; color: #ffffff; text-transform: uppercase; font-weight: 700; text-shadow: 0 0 8px rgba(0, 0, 0, 0.9); margin-bottom: 2px; }
+    #center-signal { font-size: 82px; font-weight: 900; letter-spacing: 4px; text-transform: uppercase; line-height: 1; }
+
+    .big { color: #00ff88 !important; text-shadow: 0 0 25px rgba(0, 255, 136, 0.9), 0 0 50px rgba(0, 255, 136, 0.6), 0 4px 10px #000 !important; }
+    .small { color: #ff0055 !important; text-shadow: 0 0 25px rgba(255, 0, 85, 0.9), 0 0 50px rgba(255, 0, 85, 0.6), 0 4px 10px #000 !important; }
+
+    @keyframes popFade {
+      0% { transform: translate(-50%, -50%) scale(0.6); opacity: 0; }
+      100% { transform: translate(-50%, -50%) scale(1); opacity: 1; }
+    }
+
+    #scanner-line { display: none; position: fixed; left: 0; width: 100%; height: 4px; background: #00ff88; box-shadow: 0 0 20px #00ff88, 0 0 40px #00ff88, 0 0 60px #22c55e; z-index: 99998; }
+    #scanner-line::after { content: ''; position: absolute; top: 0; left: 0; width: 100%; height: 100px; background: linear-gradient(180deg, rgba(0, 255, 136, 0.45) 0%, rgba(34, 197, 94, 0.1) 60%, transparent 100%); pointer-events: none; }
+    .scanning-active { display: block !important; animation: continuousBounce 3s ease-in-out infinite; }
+
+    @keyframes continuousBounce {
+      0% { top: 0%; }
+      33.33% { top: calc(100% - 100px); }
+      66.66% { top: 0%; }
+      100% { top: calc(100% - 100px); }
+    }
+
+    #floating-btn {
+      position: fixed; bottom: 40px; right: 20px; width: 70px; height: 70px; border-radius: 50%;
+      background: url('https://i.ibb.co.com/ZzsTRTGW/image.jpg') center/cover no-repeat;
+      border: 2px solid #00ff88; box-shadow: 0 0 20px rgba(0, 255, 136, 0.85);
+      display: flex; flex-direction: column; align-items: center; justify-content: flex-end;
+      cursor: pointer; z-index: 10000; touch-action: none; transition: transform 0.15s ease;
+    }
+
+    #floating-btn::before {
+      content: ''; position: absolute; top: -6px; left: -6px; width: 78px; height: 78px; border-radius: 50%;
+      border: 2px dashed rgba(0, 255, 136, 0.7); animation: rotateRing 5s linear infinite; pointer-events: none;
+    }
+
+    @keyframes rotateRing { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+    #floating-btn span {
+      background: rgba(0, 0, 0, 0.85); color: #00ff88; font-size: 10px; font-weight: 900; letter-spacing: 1px;
+      padding: 2px 8px; border-radius: 10px; border: 1px solid #00ff88; margin-bottom: 3px; z-index: 2; pointer-events: none;
+    }
+
+    /* এডমিন ট্রিগার বাটন */
+    #admin-trigger-btn {
+      position: fixed; top: 15px; left: 15px; z-index: 10005;
+      background: rgba(0, 0, 0, 0.8); border: 1px solid #00ff88;
+      color: #00ff88; font-size: 11px; font-weight: bold; padding: 6px 12px;
+      border-radius: 20px; cursor: pointer; box-shadow: 0 0 10px rgba(0,255,136,0.3);
+    }
+
+    .res-popup {
+      display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);
+      flex-direction: column; align-items: center; justify-content: center; text-align: center;
+      z-index: 10002; pointer-events: none; animation: resultPop 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    }
+
+    #win-img {
+      width: 90px; height: 90px; border-radius: 50%; object-fit: cover; margin-bottom: 8px;
+      border: 3px solid #00ff88; box-shadow: 0 0 25px rgba(0, 255, 136, 0.9);
+      animation: bounceImg 1.5s infinite alternate ease-in-out;
+    }
+
+    @keyframes bounceImg { 0% { transform: translateY(0px) scale(1); } 100% { transform: translateY(-8px) scale(1.06); } }
+
+    #win-txt { font-size: 85px; font-weight: 900; color: #00ff88; letter-spacing: 6px; text-shadow: 0 0 30px #00ff88, 0 0 60px #00ff88, 0 4px 15px #000; line-height: 1; }
+    #win-sub { font-size: 15px; font-weight: 800; color: #fff; letter-spacing: 3px; text-shadow: 0 0 10px rgba(0, 255, 136, 0.8), 0 2px 5px #000; margin-top: 6px; }
+
+    #loss-txt { font-size: 55px; font-weight: 900; color: #ff0055; letter-spacing: 3px; text-shadow: 0 0 30px #ff0055, 0 0 60px #ff0055, 0 4px 15px #000; line-height: 1.1; }
+    #loss-sub { font-size: 15px; font-weight: 800; color: #fff; letter-spacing: 3px; text-shadow: 0 0 10px rgba(255, 0, 85, 0.8), 0 2px 5px #000; margin-top: 6px; }
+
+    @keyframes resultPop { 0% { transform: translate(-50%, -50%) scale(0.3); opacity: 0; } 100% { transform: translate(-50%, -50%) scale(1); opacity: 1; } }
+
+    /* মোডাল স্টাইল */
+    .modal-backdrop {
+      display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+      background: rgba(0, 0, 0, 0.85); backdrop-filter: blur(8px); z-index: 20000;
+      align-items: center; justify-content: center;
+    }
+
+    .box-card {
+      width: 320px; background: rgba(11, 15, 25, 0.95); border: 2px solid #00ff88;
+      border-radius: 16px; padding: 22px 18px; text-align: center; box-shadow: 0 0 30px rgba(0, 255, 136, 0.4);
+    }
+    .box-title { color: #00ff88; font-size: 16px; font-weight: 900; letter-spacing: 2px; margin-bottom: 6px; }
+    .box-sub { color: #94a3b8; font-size: 11px; margin-bottom: 14px; }
+    .input-field { width: 100%; padding: 11px; background: #000; border: 1px solid #00ff88; border-radius: 8px; color: #fff; font-family: 'Orbitron', monospace; font-size: 12px; text-align: center; outline: none; margin-bottom: 12px; }
+    .btn-green { width: 100%; padding: 11px; background: linear-gradient(90deg, #00ff88, #00f2fe); border: none; border-radius: 8px; color: #000; font-family: 'Orbitron', sans-serif; font-size: 12px; font-weight: 900; letter-spacing: 1.5px; cursor: pointer; }
+    
+    .admin-dur-btn {
+      padding: 8px 4px; background: #12061f; border: 1px solid #00ff88;
+      color: #00ff88; border-radius: 6px; font-size: 10px; font-weight: bold; cursor: pointer;
+    }
+    .admin-dur-btn:active { background: #00ff88; color: #000; }
+  </style>
+</head>
+<body oncontextmenu="return false;" onkeydown="return disableShortcuts(event);">
+
+  <iframe id="game-frame" src="https://hgnice.top/#/register?invitationCode=824541370189"></iframe>
+
+  <div id="scanner-line"></div>
+
+  <!-- এডমিন বাটন -->
+  <button id="admin-trigger-btn" onclick="openAdminModal()">ADMIN ⚙️</button>
+
+  <div id="center-display">
+    <div id="center-period">PERIOD: ---</div>
+    <div id="center-trend">ANALYZING...</div>
+    <div id="center-label">NEXT PREDICTION</div>
+    <div id="center-signal">BIG</div>
+  </div>
+
+  <div id="win-popup" class="res-popup">
+    <img id="win-img" src="https://i.ibb.co.com/ZzsTRTGW/image.jpg" alt="RXN Verified">
+    <div id="win-txt">WIN</div>
+    <div id="win-sub">SIGNAL MATCHED!</div>
+  </div>
+
+  <div id="loss-popup" class="res-popup">
+    <div id="loss-txt">SORRY 1 STEP</div>
+    <div id="loss-sub">TRY NEXT ROUND</div>
+  </div>
+
+  <!-- ইউজার VIP KEY মোডাল -->
+  <div id="user-key-modal" class="modal-backdrop">
+    <div class="box-card">
+      <div class="box-title">⚡ VIP ACCESS KEY</div>
+      <div class="box-sub">OWNER: RXN JOSHIM VIP</div>
+      <input type="text" id="vip-key-input" class="input-field" placeholder="ENTER ACCESS KEY..." autocomplete="off">
+      <button class="btn-green" onclick="verifyUserKey()">UNLOCK ENGINE</button>
+    </div>
+  </div>
+
+  <!-- এডমিন পাসওয়ার্ড মোডাল -->
+  <div id="admin-pass-modal" class="modal-backdrop">
+    <div class="box-card">
+      <div class="box-title">🔐 ADMIN ACCESS</div>
+      <div class="box-sub">ENTER MASTER ADMIN PASSWORD</div>
+      <input type="password" id="admin-pass-input" class="input-field" placeholder="ENTER PASSWORD..." autocomplete="off">
+      <button class="btn-green" onclick="verifyAdminPass()">LOGIN ADMIN</button>
+      <button onclick="closeModals()" style="background:none;border:none;color:#ff0055;margin-top:10px;font-size:11px;cursor:pointer;">CLOSE</button>
+    </div>
+  </div>
+
+  <!-- এডমিন KEY জেনারেটর প্যানেল মোডাল -->
+  <div id="admin-gen-modal" class="modal-backdrop">
+    <div class="box-card" style="width:340px;">
+      <div class="box-title">⚡ KEY GENERATOR</div>
+      <div class="box-sub">SELECT DURATION TO CREATE VIP KEY</div>
+      
+      <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-bottom: 12px;">
+        <button class="admin-dur-dur admin-dur-btn" onclick="generateKey('1H')">1 HOUR KEY</button>
+        <button class="admin-dur-dur admin-dur-btn" onclick="generateKey('1D')">1 DAY KEY</button>
+        <button class="admin-dur-dur admin-dur-btn" onclick="generateKey('3D')">3 DAYS KEY</button>
+        <button class="admin-dur-dur admin-dur-btn" onclick="generateKey('LIFE')">LIFETIME KEY</button>
+      </div>
+
+      <input type="text" id="gen-key-output" class="input-field" placeholder="GENERATED KEY APPEARS HERE" readonly style="color:#00f2fe;">
+      
+      <button class="btn-green" onclick="copyGenKey()">COPY GENERATED KEY 📋</button>
+      <button onclick="closeModals()" style="background:none;border:none;color:#94a3b8;margin-top:10px;font-size:11px;cursor:pointer;">EXIT PANEL</button>
+    </div>
+  </div>
+
+  <div id="floating-btn">
+    <span>SCAN</span>
+  </div>
+
+  <script>
+    function disableShortcuts(e) {
+      if (e.keyCode == 123 || (e.ctrlKey && e.shiftKey && (e.keyCode == 'I'.charCodeAt(0) || e.keyCode == 'J'.charCodeAt(0) || e.keyCode == 'C'.charCodeAt(0))) || (e.ctrlKey && e.keyCode == 'U'.charCodeAt(0))) {
+        return false;
+      }
+    }
+
+    const MASTER_ADMIN_PASS = "61592749217599";
+    const SECRET_LIFETIME_KEY = "RXN_WIN_VIPJJ33";
+    const apiURL = "https://draw.ar-lottery01.com/WinGo/WinGo_30S/GetHistoryIssuePage.json?pageNo=1&pageSize=30";
+    
+    const btn = document.getElementById("floating-btn");
+    let hideTimer = null, beepInterval = null, audioCtx = null;
+    let lastTrackedPeriod = "", lastTrackedSignal = "", lossStep = 0;
+
+    // এক্সপায়ারি ও অথেন্টিকেশন চেক
+    function isAccessValid() {
+      const exp = localStorage.getItem("rxn_scanner_expire");
+      if (!exp) return false;
+      if (exp === "LIFETIME") return true;
+      if (Date.now() < parseInt(exp)) return true;
+      localStorage.removeItem("rxn_scanner_expire");
+      return false;
+    }
+
+    // এডমিন মডাল হ্যান্ডলার
+    function openAdminModal() {
+      document.getElementById("admin-pass-modal").style.display = "flex";
+      document.getElementById("admin-pass-input").value = "";
+      document.getElementById("admin-pass-input").focus();
+    }
+
+    function verifyAdminPass() {
+      const pass = document.getElementById("admin-pass-input").value.trim();
+      if (pass === MASTER_ADMIN_PASS) {
+        document.getElementById("admin-pass-modal").style.display = "none";
+        document.getElementById("admin-gen-modal").style.display = "flex";
+      } else {
+        alert("❌ ভুল এডমিন পাসওয়ার্ড!");
+      }
+    }
+
+    function closeModals() {
+      document.getElementById("admin-pass-modal").style.display = "none";
+      document.getElementById("admin-gen-modal").style.display = "none";
+      document.getElementById("user-key-modal").style.display = "none";
+    }
+
+    // টাইম-বেসড Key জেনারেশন অ্যালগরিদম
+    function generateKey(duration) {
+      const randStr = Math.random().toString(36).substring(2, 6).toUpperCase();
+      let key = "";
+      if (duration === "1H") key = "RXN1H-" + randStr + "-" + btoa(Date.now() + 3600000).substring(0, 8);
+      else if (duration === "1D") key = "RXN1D-" + randStr + "-" + btoa(Date.now() + 86400000).substring(0, 8);
+      else if (duration === "3D") key = "RXN3D-" + randStr + "-" + btoa(Date.now() + 259200000).substring(0, 8);
+      else if (duration === "LIFE") key = "RXNLIFE-" + randStr + "-PERMANENT";
+      
+      document.getElementById("gen-key-output").value = key;
+    }
+
+    function copyGenKey() {
+      const out = document.getElementById("gen-key-output");
+      if (!out.value) { alert("আগে একটি Key তৈরি করুন!"); return; }
+      out.select();
+      navigator.clipboard.writeText(out.value);
+      alert("✅ Key কপি হয়েছে: " + out.value);
+    }
+
+    // ইউজার Key ভেরিফিকেশন
+    function verifyUserKey() {
+      const key = document.getElementById("vip-key-input").value.trim();
+      
+      if (key === SECRET_LIFETIME_KEY || key.startsWith("RXNLIFE-")) {
+        localStorage.setItem("rxn_scanner_expire", "LIFETIME");
+        closeModals();
+        speakBengali("লাইফটাইম ভিআইপি এক্সেস আনলকড");
+        executeScan();
+        return;
+      }
+
+      if (key.startsWith("RXN1H-") || key.startsWith("RXN1D-") || key.startsWith("RXN3D-")) {
+        let durationMs = 0;
+        let durName = "";
+        if (key.startsWith("RXN1H-")) { durationMs = 3600000; durName = "১ ঘণ্টা"; }
+        if (key.startsWith("RXN1D-")) { durationMs = 86400000; durName = "১ দিন"; }
+        if (key.startsWith("RXN3D-")) { durationMs = 259200000; durName = "৩ দিন"; }
+
+        const expireTime = Date.now() + durationMs;
+        localStorage.setItem("rxn_scanner_expire", expireTime.toString());
+        closeModals();
+        speakBengali(durName + "র জন্য ভিআইপি এক্সেস আনলকড");
+        executeScan();
+        return;
+      }
+
+      alert("❌ ভুল বা মেয়াদোত্তীর্ণ Key!");
+    }
+
+    function playBeepSound() {
+      try {
+        if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        if (audioCtx.state === 'suspended') audioCtx.resume();
+        const osc = audioCtx.createOscillator(), gain = audioCtx.createGain();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(950, audioCtx.currentTime);
+        gain.gain.setValueAtTime(0.15, audioCtx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.08);
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        osc.start();
+        osc.stop(audioCtx.currentTime + 0.08);
+      } catch (e) {}
+    }
+
+    function advancedPatternEngine(list) {
+      if (!list || list.length < 5) return { signal: "BIG", trendName: "NORMAL TREND" };
+      const results = list.map(item => parseInt(item.number || 0) >= 5 ? "BIG" : "SMALL");
+      const numbers = list.map(item => parseInt(item.number || 0));
+
+      let streak = 1;
+      for (let i = 0; i < results.length - 1; i++) {
+        if (results[i] === results[i + 1]) streak++; else break;
+      }
+
+      if (streak >= 5) return { signal: (results[0] === "BIG") ? "SMALL" : "BIG", trendName: `⚠️ POLTI / REVERSAL [${streak}X]` };
+      if (streak >= 2 && streak <= 4) return { signal: results[0], trendName: `🔥 DRAGON TREND [${streak}X]` };
+      if (results[0] !== results[1] && results[1] !== results[2]) return { signal: (results[0] === "BIG") ? "SMALL" : "BIG", trendName: "⚡ 1-1 ZIGZAG TREND" };
+      if (results.length >= 4 && results[0] === results[1] && results[2] === results[3] && results[0] !== results[2]) return { signal: (results[0] === "BIG") ? "SMALL" : "BIG", trendName: "🔄 2-2 PAIR REPEAT" };
+
+      const last5Nums = numbers.slice(0, 5);
+      const avg = last5Nums.reduce((a, b) => a + b, 0) / 5;
+      const recentBigs = results.slice(0, 10).filter(r => r === "BIG").length;
+      
+      let sig = (avg >= 5.2 && recentBigs > 6) ? "SMALL" : (avg <= 3.8 && recentBigs < 4) ? "BIG" : (numbers[0] % 2 === 0 ? "BIG" : "SMALL");
+      return { signal: sig, trendName: "📊 MOMENTUM WAVE" };
+    }
+
+    async function executeScan() {
+      if (!isAccessValid()) {
+        document.getElementById("user-key-modal").style.display = "flex";
+        document.getElementById("vip-key-input").focus();
+        return;
+      }
+
+      const scanner = document.getElementById("scanner-line");
+      const center = document.getElementById("center-display");
+      const centerSignal = document.getElementById("center-signal");
+      const centerPeriod = document.getElementById("center-period");
+      const centerTrend = document.getElementById("center-trend");
+
+      if (hideTimer) clearTimeout(hideTimer);
+      if (beepInterval) clearInterval(beepInterval);
+
+      scanner.classList.add("scanning-active");
+      center.style.display = "none";
+
+      playBeepSound();
+      beepInterval = setInterval(playBeepSound, 250);
+
+      try {
+        const res = await fetch(apiURL);
+        const data = await res.json();
+        
+        setTimeout(() => {
+          clearInterval(beepInterval);
+          scanner.classList.remove("scanning-active");
+
+          const list = data.data?.list || [];
+          let signal = "BIG", trendName = "MARKET: STABLE", fullTargetPeriod = "", displayPeriod = Date.now().toString().slice(-4);
+
+          if (list.length > 0) {
+            const rawPeriod = list[0].issueNumber || list[0].periodNumber || list[0].issue;
+            if (rawPeriod) {
+              fullTargetPeriod = (BigInt(rawPeriod) + 1n).toString();
+              displayPeriod = fullTargetPeriod.slice(-4);
+            }
+            const analysis = advancedPatternEngine(list);
+            signal = analysis.signal;
+            trendName = analysis.trendName;
+          } else {
+            signal = Math.random() > 0.5 ? "BIG" : "SMALL";
+          }
+
+          lastTrackedPeriod = fullTargetPeriod;
+          lastTrackedSignal = signal;
+
+          centerPeriod.innerText = "PERIOD: " + displayPeriod;
+          centerTrend.innerText = "TREND: " + trendName;
+          centerSignal.innerText = signal;
+          centerSignal.className = (signal === "BIG") ? "big" : "small";
+          center.style.display = "flex";
+
+          speakBengali(signal === "BIG" ? "মার্কেট এনালাইসিস কমপ্লিট, বিগ ট্রেড করুন" : "মার্কেট এনালাইসিস কমপ্লিট, স্মল ট্রেড করুন");
+
+          hideTimer = setTimeout(() => { center.style.display = "none"; }, 5000);
+        }, 3000);
+      } catch (e) {
+        setTimeout(() => {
+          clearInterval(beepInterval);
+          scanner.classList.remove("scanning-active");
+          centerPeriod.innerText = "PERIOD: " + Date.now().toString().slice(-4);
+          centerTrend.innerText = "TREND: VOLATILE";
+          centerSignal.innerText = "BIG";
+          centerSignal.className = "big";
+          center.style.display = "flex";
+          speakBengali("বিগ ট্রেড করুন");
+          hideTimer = setTimeout(() => { center.style.display = "none"; }, 5000);
+        }, 3000);
+      }
+    }
+
+    async function checkResultWin() {
+      if (!lastTrackedPeriod || !lastTrackedSignal) return;
+      try {
+        const res = await fetch(apiURL);
+        const data = await res.json();
+        const list = data.data?.list || [];
+        if (list.length > 0) {
+          const item = list[0];
+          const currentPeriod = item.issueNumber || item.periodNumber || item.issue;
+          if (currentPeriod === lastTrackedPeriod) {
+            const actualNum = parseInt(item.number || 0);
+            const actualResult = (actualNum >= 5) ? "BIG" : "SMALL";
+            if (actualResult === lastTrackedSignal) {
+              lossStep = 0;
+              showWinPopup();
+            } else {
+              lossStep++;
+              showLossPopup(lossStep);
+            }
+            lastTrackedPeriod = "";
+            lastTrackedSignal = "";
+          }
+        }
+      } catch (e) {}
+    }
+
+    function showWinPopup() {
+      const winPop = document.getElementById("win-popup");
+      winPop.style.display = "flex";
+      speakBengali("উইন! ট্রেড সফল হয়েছে");
+      setTimeout(() => { winPop.style.display = "none"; }, 4000);
+    }
+
+    function showLossPopup(step) {
+      const lossPop = document.getElementById("loss-popup");
+      document.getElementById("loss-txt").innerText = `SORRY ${step} STEP`;
+      lossPop.style.display = "flex";
+      speakBengali(`সরি ${step} স্টেপ`);
+      setTimeout(() => { lossPop.style.display = "none"; }, 4000);
+    }
+
+    function speakBengali(text) {
+      if ('speechSynthesis' in window) {
+        window.speechSynthesis.cancel();
+        const msg = new SpeechSynthesisUtterance(text);
+        msg.lang = 'bn-BD';
+        msg.rate = 1.0;
+        window.speechSynthesis.speak(msg);
+      }
+    }
+
+    setInterval(checkResultWin, 2000);
+
+    // টাচ ও ড্র্যাগিং হ্যান্ডলার
+    let isDragging = false;
+    let startX = 0, startY = 0, initialLeft = 0, initialTop = 0;
+
+    btn.addEventListener('touchstart', (e) => {
+      isDragging = false;
+      const touch = e.touches[0];
+      startX = touch.clientX;
+      startY = touch.clientY;
+      initialLeft = btn.offsetLeft;
+      initialTop = btn.offsetTop;
+    }, {passive: true});
+
+    btn.addEventListener('touchmove', (e) => {
+      const touch = e.touches[0];
+      const dx = touch.clientX - startX;
+      const dy = touch.clientY - startY;
+
+      if (Math.abs(dx) > 6 || Math.abs(dy) > 6) {
+        isDragging = true;
+        let newX = initialLeft + dx;
+        let newY = initialTop + dy;
+        newX = Math.max(10, Math.min(newX, window.innerWidth - btn.offsetWidth - 10));
+        newY = Math.max(10, Math.min(newY, window.innerHeight - btn.offsetHeight - 10));
+        btn.style.left = newX + 'px';
+        btn.style.top = newY + 'px';
+        btn.style.right = 'auto';
+        btn.style.bottom = 'auto';
+      }
+    }, {passive: true});
+
+    btn.addEventListener('touchend', () => { if (!isDragging) executeScan(); });
+    btn.addEventListener('click', () => { if (!isDragging) executeScan(); });
+  </script>
+</body>
+</html>
